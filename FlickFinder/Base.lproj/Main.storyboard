@@ -60,6 +60,9 @@
                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="k54-Ie-0uU">
                                                 <rect key="frame" x="494" y="0.0" width="46" height="40"/>
                                                 <state key="normal" title="Button"/>
+                                                <connections>
+                                                    <action selector="textSearchButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="632-g6-gae"/>
+                                                </connections>
                                             </button>
                                         </subviews>
                                     </stackView>
@@ -82,6 +85,9 @@
                                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="nU9-vu-Kql">
                                                 <rect key="frame" x="373.5" y="0.0" width="166.5" height="40"/>
                                                 <state key="normal" title="Button"/>
+                                                <connections>
+                                                    <action selector="latLongSearchButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="mnz-yG-Rd1"/>
+                                                </connections>
                                             </button>
                                         </subviews>
                                     </stackView>
@@ -116,6 +122,13 @@
                             <constraint firstItem="UHW-YJ-233" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="20" id="xup-XO-J7A"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="imageTitle" destination="ioO-Xp-5Sh" id="SGA-TX-QUs"/>
+                        <outlet property="latitude" destination="EJp-wQ-Tym" id="Krp-vL-G1E"/>
+                        <outlet property="longitude" destination="zcg-bd-9gl" id="7cW-ca-ByC"/>
+                        <outlet property="photoImageView" destination="vMe-nK-PrO" id="fKY-G5-o10"/>
+                        <outlet property="searchStringTextField" destination="FLJ-sc-URI" id="3e6-ln-kyJ"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
