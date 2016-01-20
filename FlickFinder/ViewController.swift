@@ -55,6 +55,7 @@ class ViewController: UIViewController {
             } else {
                 print("data: ", data)
                 print("\nresponse: ", response)
+                print("\ndownloadError: ", downloadError)
             }
         }
         task.resume()
