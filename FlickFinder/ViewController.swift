@@ -53,9 +53,15 @@ class ViewController: UIViewController {
                 print("error: ", error)
                 print("Could not complete the download")
             } else {
-                print("data: ", data)
-                print("\nresponse: ", response)
-                print("\ndownloadError: ", downloadError)
+                let parsedResult: AnyObject!
+                do {
+                    parsedResult = try NSJSONSerialization.JSONObjectWithData(data!, options: .AllowFragments)
+                    print("parsedResult: ", parsedResult)
+                } catch {
+                    parsedResult = nil
+                    print("Could not parse the data as JSON: '\(data)'")
+                    return
+                }
             }
         }
         task.resume()
