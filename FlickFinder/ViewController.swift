@@ -38,33 +38,95 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
     }
+    
+    
     @IBAction func textSearchButton(sender: UIButton) {
-        print("In textSearchButton")
         
+        /* 3 - Get the shared NSURLSession to faciliate network activity */
         let session = NSURLSession.sharedSession()
         
+        /* 4 - Create the NSURLRequest using properly escaped URL */
         let urlString = BASE_URL + escapedParameters(methodArguments)
         let url = NSURL(string: urlString)!
         let request = NSURLRequest(URL: url)
-        print("request: ", request)
         
-        let task = session.dataTaskWithRequest(request) { data, response, downloadError in
-            if let error = downloadError {
-                print("error: ", error)
-                print("Could not complete the download")
-            } else {
-                let parsedResult: AnyObject!
-                do {
-                    parsedResult = try NSJSONSerialization.JSONObjectWithData(data!, options: .AllowFragments)
-                    print("parsedResult: ", parsedResult)
-                } catch {
-                    parsedResult = nil
-                    print("Could not parse the data as JSON: '\(data)'")
-                    return
-                }
+        /* 5 - Create NSURLSessionDataTask and completion handler */
+        let task = session.dataTaskWithRequest(request) { (data, response, error) in
+            
+            /* GUARD: Was there an error? */
+            guard (error == nil) else {
+                print("There was an error with your request: \(error)")
+                return
             }
+            
+            /* GUARD: Did we get a successful 2XX response? */
+            guard let statusCode = (response as? NSHTTPURLResponse)?.statusCode where statusCode >= 200 && statusCode <= 299 else {
+                if let response = response as? NSHTTPURLResponse {
+                    print("Your request returned an invalid response! Status code: \(response.statusCode)!")
+                } else if let response = response {
+                    print("Your request returned an invalid response! Response: \(response)!")
+                } else {
+                    print("Your request returned an invalid response!")
+                }
+                return
+            }
+            
+            /* GUARD: Was there any data returned? */
+            guard let data = data else {
+                print("No data was returned by the request!")
+                return
+            }
+            
+            /* Parse the data! */
+            let parsedResult: AnyObject!
+            do {
+                parsedResult = try NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments)
+            } catch {
+                parsedResult = nil
+                print("Could not parse the data as JSON: '\(data)'")
+                return
+            }
+            
+            /* GUARD: Did Flickr return an error? */
+            guard let stat = parsedResult["stat"] as? String where stat == "ok" else {
+                print("Flickr API returned an error. See error code and message in \(parsedResult)")
+                return
+            }
+            
+            /* GUARD: Is "photos" key in our result? */
+            guard let photosDictionary = parsedResult["photos"] as? NSDictionary else {
+                print("Cannot find keys 'photos' in \(parsedResult)")
+                return
+            }
+            
+            guard let photoCount = photosDictionary["photo"]?.count else {
+                print("There are no photos")
+                return
+            }
+            print(photoCount)
+            
+            let arrayIndex = self.randomValue(photoCount)
+            print("\narrayIndex: ", arrayIndex)
+            
+            guard let photos = photosDictionary["photo"] else {
+                print("There are no photos")
+                return
+            }
+            print("RandomPhoto: ", photos[arrayIndex])
+            
+            guard let url = photos[arrayIndex]["url_m"] as? String else {
+                print("There is no url for the image")
+                return
+            }
+            print("URL: ", url)
         }
+        
+        
         task.resume()
+    }
+    
+    func randomValue(noOfElements: Int) -> Int {
+        return Int(arc4random_uniform(UInt32(noOfElements)))
     }
     
     @IBAction func latLongSearchButton(sender: UIButton) {
