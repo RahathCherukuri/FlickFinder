@@ -25,7 +25,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var longitude: UITextField!
     @IBOutlet weak var imageTitle: UILabel!
     
-    let methodArguments = [
+    var methodArguments = [
         "method": METHOD_NAME,
         "api_key": API_KEY,
         "text": "baby+asian+elephant",
@@ -39,16 +39,20 @@ class ViewController: UIViewController {
         super.viewDidLoad()
     }
     
-    
     @IBAction func textSearchButton(sender: UIButton) {
         
         /* 3 - Get the shared NSURLSession to faciliate network activity */
         let session = NSURLSession.sharedSession()
         
+        var searchText = searchStringTextField.text!
+        searchText = searchText.stringByReplacingOccurrencesOfString(" ", withString: "+", options: .LiteralSearch, range: nil)
+        methodArguments["text"] = searchText
+        
         /* 4 - Create the NSURLRequest using properly escaped URL */
         let urlString = BASE_URL + escapedParameters(methodArguments)
         let url = NSURL(string: urlString)!
         let request = NSURLRequest(URL: url)
+        print("request: ", request)
         
         /* 5 - Create NSURLSessionDataTask and completion handler */
         let task = session.dataTaskWithRequest(request) { (data, response, error) in
@@ -104,21 +108,39 @@ class ViewController: UIViewController {
                 return
             }
             print(photoCount)
-            
-            let arrayIndex = self.randomValue(photoCount)
-            print("\narrayIndex: ", arrayIndex)
-            
-            guard let photos = photosDictionary["photo"] else {
-                print("There are no photos")
-                return
+            if photoCount > 0 {
+                let arrayIndex = self.randomValue(photoCount)
+                print("\narrayIndex: ", arrayIndex)
+                
+                guard let photos = photosDictionary["photo"] else {
+                    print("There are no photos")
+                    return
+                }
+                print("RandomPhoto: ", photos[arrayIndex])
+                
+                guard let imageUrlString = photos[arrayIndex]["url_m"] as? String,
+                let photoTitle = photos[arrayIndex]["title"] as? String else {
+                    print("There is no url for the image")
+                    return
+                }
+                print("URL: ", imageUrlString)
+                
+                let imageURL = NSURL(string: imageUrlString)
+                
+                /* 6 - Update the UI on the main thread */
+                if let imageData = NSData(contentsOfURL: imageURL!) {
+                    dispatch_async(dispatch_get_main_queue(), {
+                        self.imageTitle.text = photoTitle
+                        self.photoImageView.image = UIImage(data: imageData)
+                    })
+                }
+            } else {
+                dispatch_async(dispatch_get_main_queue(), {
+                    print("No Photos Found. Search Again.")
+                    self.imageTitle.text = "No Photos Found. Search Again."
+                })
             }
-            print("RandomPhoto: ", photos[arrayIndex])
             
-            guard let url = photos[arrayIndex]["url_m"] as? String else {
-                print("There is no url for the image")
-                return
-            }
-            print("URL: ", url)
         }
         
         
@@ -154,4 +176,5 @@ class ViewController: UIViewController {
         return (!urlVars.isEmpty ? "?" : "") + urlVars.joinWithSeparator("&")
     }
 }
+
 

@@ -398,6 +398,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = FlickFinder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dominion.FlickFinder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -409,6 +410,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = FlickFinder/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dominion.FlickFinder;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -482,6 +484,7 @@
 				326661CE1C4693920053B4E0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		326661CF1C4693920053B4E0 /* Build configuration list for PBXNativeTarget "FlickFinderTests" */ = {
 			isa = XCConfigurationList;
@@ -490,6 +493,7 @@
 				326661D11C4693920053B4E0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		326661D21C4693920053B4E0 /* Build configuration list for PBXNativeTarget "FlickFinderUITests" */ = {
 			isa = XCConfigurationList;
@@ -498,6 +502,7 @@
 				326661D41C4693920053B4E0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
