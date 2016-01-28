@@ -15,6 +15,12 @@ let EXTRAS = "url_m"
 let SAFE_SEARCH = "1"
 let DATA_FORMAT = "json"
 let NO_JSON_CALLBACK = "1"
+let BOUNDING_BOX_HALF_WIDTH = 1.0
+let BOUNDING_BOX_HALF_HEIGHT = 1.0
+let LAT_MIN = -90.0
+let LAT_MAX = 90.0
+let LON_MIN = -180.0
+let LON_MAX = 180.0
 
 
 class ViewController: UIViewController {
@@ -41,22 +47,47 @@ class ViewController: UIViewController {
     
     @IBAction func textSearchButton(sender: UIButton) {
         
-        /* 3 - Get the shared NSURLSession to faciliate network activity */
-        let session = NSURLSession.sharedSession()
+        var methodArguments = [
+            "method": METHOD_NAME,
+            "api_key": API_KEY,
+            "safe_search": SAFE_SEARCH,
+            "extras": EXTRAS,
+            "format": DATA_FORMAT,
+            "nojsoncallback": NO_JSON_CALLBACK
+        ]
         
         var searchText = searchStringTextField.text!
         searchText = searchText.stringByReplacingOccurrencesOfString(" ", withString: "+", options: .LiteralSearch, range: nil)
         methodArguments["text"] = searchText
-        
-        /* 4 - Create the NSURLRequest using properly escaped URL */
+        print("methodArguments: ",methodArguments)
+        getImageFromFlickrBySearch(methodArguments)
+    }
+    
+    @IBAction func latLongSearchButton(sender: UIButton) {
+        var methodArguments = [
+            "method": METHOD_NAME,
+            "api_key": API_KEY,
+            "safe_search": SAFE_SEARCH,
+            "extras": EXTRAS,
+            "format": DATA_FORMAT,
+            "nojsoncallback": NO_JSON_CALLBACK
+        ]
+        methodArguments["bbox"] = createBoundingBoxString()
+        print("methodArguments: ",methodArguments)
+        getImageFromFlickrBySearch(methodArguments)
+    }
+    
+    func randomValue(noOfElements: Int) -> Int {
+        return Int(arc4random_uniform(UInt32(noOfElements)))
+    }
+    
+    func getImageFromFlickrBySearch(methodArguments: [String : AnyObject]) {
+        let session = NSURLSession.sharedSession()
         let urlString = BASE_URL + escapedParameters(methodArguments)
         let url = NSURL(string: urlString)!
         let request = NSURLRequest(URL: url)
-        print("request: ", request)
         
-        /* 5 - Create NSURLSessionDataTask and completion handler */
         let task = session.dataTaskWithRequest(request) { (data, response, error) in
-            
             /* GUARD: Was there an error? */
             guard (error == nil) else {
                 print("There was an error with your request: \(error)")
@@ -119,9 +150,9 @@ class ViewController: UIViewController {
                 print("RandomPhoto: ", photos[arrayIndex])
                 
                 guard let imageUrlString = photos[arrayIndex]["url_m"] as? String,
-                let photoTitle = photos[arrayIndex]["title"] as? String else {
-                    print("There is no url for the image")
-                    return
+                    let photoTitle = photos[arrayIndex]["title"] as? String else {
+                        print("There is no url for the image")
+                        return
                 }
                 print("URL: ", imageUrlString)
                 
@@ -140,19 +171,22 @@ class ViewController: UIViewController {
                     self.imageTitle.text = "No Photos Found. Search Again."
                 })
             }
-            
         }
-        
-        
         task.resume()
     }
     
-    func randomValue(noOfElements: Int) -> Int {
-        return Int(arc4random_uniform(UInt32(noOfElements)))
-    }
-    
-    @IBAction func latLongSearchButton(sender: UIButton) {
-        print("latLongSearchButton")
+    func createBoundingBoxString() -> String {
+        
+        let latitude = (self.latitude.text! as NSString).doubleValue
+        let longitude = (self.longitude.text! as NSString).doubleValue
+        
+        /* Fix added to ensure box is bounded by minimum and maximums */
+        let bottom_left_lon = max(longitude - BOUNDING_BOX_HALF_WIDTH, LON_MIN)
+        let bottom_left_lat = max(latitude - BOUNDING_BOX_HALF_HEIGHT, LAT_MIN)
+        let top_right_lon = min(longitude + BOUNDING_BOX_HALF_HEIGHT, LON_MAX)
+        let top_right_lat = min(latitude + BOUNDING_BOX_HALF_HEIGHT, LAT_MAX)
+        
+        return "\(bottom_left_lon),\(bottom_left_lat),\(top_right_lon),\(top_right_lat)"
     }
     
     /* Helper function: Given a dictionary of parameters, convert to a string for a url */
