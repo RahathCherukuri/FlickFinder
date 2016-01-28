@@ -31,22 +31,38 @@ class ViewController: UIViewController {
     @IBOutlet weak var longitude: UITextField!
     @IBOutlet weak var imageTitle: UILabel!
     
-    var methodArguments = [
-        "method": METHOD_NAME,
-        "api_key": API_KEY,
-        "text": "baby+asian+elephant",
-        "safe_search": SAFE_SEARCH,
-        "extras": EXTRAS,
-        "format": DATA_FORMAT,
-        "nojsoncallback": NO_JSON_CALLBACK
-    ]
+    var tapRecognizer: UITapGestureRecognizer? = nil
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tapRecognizer = UITapGestureRecognizer(target: self, action: "handleSingleTap:")
+        tapRecognizer?.numberOfTapsRequired = 1
     }
+    
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        /* Add tap recognizer */
+        self.addKeyboardDismissRecognizer();
+        
+        /* Subscribe to all keyboard events */
+        self.subscribeToKeyboardNotifications()
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        /* Remove tap recognizer */
+        self.removeKeyboardDismissRecognizer()
+        
+        /* Unsubscribe to all keyboard events */
+        self.unsubscribeToKeyboardNotifications()
+    }
+
     
     @IBAction func textSearchButton(sender: UIButton) {
         
+        self.dismissAnyVisibleKeyboards()
         var methodArguments = [
             "method": METHOD_NAME,
             "api_key": API_KEY,
@@ -64,6 +80,7 @@ class ViewController: UIViewController {
     }
     
     @IBAction func latLongSearchButton(sender: UIButton) {
+        self.dismissAnyVisibleKeyboards()
         var methodArguments = [
             "method": METHOD_NAME,
             "api_key": API_KEY,
@@ -208,6 +225,56 @@ class ViewController: UIViewController {
         }
         
         return (!urlVars.isEmpty ? "?" : "") + urlVars.joinWithSeparator("&")
+    }
+    
+    // MARK: Show/Hide Keyboard
+    
+    func addKeyboardDismissRecognizer() {
+        self.view.addGestureRecognizer(tapRecognizer!)
+    }
+    
+    func removeKeyboardDismissRecognizer() {
+        self.view.removeGestureRecognizer(tapRecognizer!)
+    }
+    
+    func handleSingleTap(recognizer: UITapGestureRecognizer) {
+        self.view.endEditing(true)
+    }
+    
+    func subscribeToKeyboardNotifications() {
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillShow:", name: UIKeyboardWillShowNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "keyboardWillHide:", name: UIKeyboardWillHideNotification, object: nil)
+    }
+    
+    func unsubscribeToKeyboardNotifications() {
+        NSNotificationCenter.defaultCenter().removeObserver(self, name: UIKeyboardWillShowNotification, object: nil)
+    }
+    
+    func keyboardWillShow(notification: NSNotification) {
+        if self.view.frame.origin.y == 0.0 {
+            self.view.frame.origin.y -= self.getKeyboardHeight(notification)
+        }
+    }
+    
+    func keyboardWillHide(notification: NSNotification) {
+        if self.view.frame.origin.y != 0.0 {
+            self.view.frame.origin.y += self.getKeyboardHeight(notification)
+        }
+    }
+    
+    func getKeyboardHeight(notification: NSNotification) -> CGFloat {
+        let userInfo = notification.userInfo
+        let keyboardSize = userInfo![UIKeyboardFrameEndUserInfoKey] as! NSValue // of CGRect
+        return keyboardSize.CGRectValue().height
+    }
+}
+
+
+extension ViewController {
+    func dismissAnyVisibleKeyboards() {
+        if searchStringTextField.isFirstResponder() || latitude.isFirstResponder() || longitude.isFirstResponder() {
+            self.view.endEditing(true)
+        }
     }
 }
 
