@@ -72,10 +72,14 @@ class ViewController: UIViewController {
             "nojsoncallback": NO_JSON_CALLBACK
         ]
         
+        if (self.searchStringTextField.text!.isEmpty) {
+            imageTitle.text = "Enter text to search"
+            return
+        }
+        
         var searchText = searchStringTextField.text!
         searchText = searchText.stringByReplacingOccurrencesOfString(" ", withString: "+", options: .LiteralSearch, range: nil)
         methodArguments["text"] = searchText
-//        print("methodArguments: ",methodArguments)
         getImageFromFlickrBySearch(methodArguments)
     }
     
@@ -89,9 +93,39 @@ class ViewController: UIViewController {
             "format": DATA_FORMAT,
             "nojsoncallback": NO_JSON_CALLBACK
         ]
-        methodArguments["bbox"] = createBoundingBoxString()
-//        print("methodArguments: ",methodArguments)
+        
+        if (self.latitude.text!.isEmpty || self.longitude.text!.isEmpty) {
+            imageTitle.text = self.latitude.text!.isEmpty ? "Latitude can't be empty" : "Longitude can't be empty"
+            return
+        }
+        
+        guard let val = createBoundingBoxString() as String? else {
+            return
+        }
+        methodArguments["bbox"] = val
         getImageFromFlickrBySearch(methodArguments)
+    }
+    
+    func createBoundingBoxString() -> String? {
+        
+        let latitude = (self.latitude.text! as NSString).doubleValue
+        let longitude = (self.longitude.text! as NSString).doubleValue
+        if (latitude < LAT_MIN || latitude > LAT_MAX || longitude < LON_MIN || longitude > LON_MAX) {
+            if (latitude < LAT_MIN || latitude > LAT_MAX) {
+                imageTitle.text = "Latitude range [-90,90]"
+            }
+            else {
+                imageTitle.text = "Longitude range [-180,180]"
+            }
+            return nil
+        }
+        /* Fix added to ensure box is bounded by minimum and maximums */
+        let bottom_left_lon = max(longitude - BOUNDING_BOX_HALF_WIDTH, LON_MIN)
+        let bottom_left_lat = max(latitude - BOUNDING_BOX_HALF_HEIGHT, LAT_MIN)
+        let top_right_lon = min(longitude + BOUNDING_BOX_HALF_HEIGHT, LON_MAX)
+        let top_right_lat = min(latitude + BOUNDING_BOX_HALF_HEIGHT, LAT_MAX)
+        
+        return "\(bottom_left_lon),\(bottom_left_lat),\(top_right_lon),\(top_right_lat)"
     }
     
     func randomValue(noOfElements: Int) -> Int {
@@ -146,7 +180,7 @@ class ViewController: UIViewController {
             }
             
             /* GUARD: Is "photos" key in our result? */
-            guard let photosDictionary = parsedResult["photos"] as? NSDictionary else {
+            guard let photosDictionary = parsedResult["photos"] as? [String: AnyObject] else {
                 print("Cannot find keys 'photos' in \(parsedResult)")
                 return
             }
@@ -161,40 +195,6 @@ class ViewController: UIViewController {
             let pageLimit = min(totalPages, 40)
             let randomPage = Int(arc4random_uniform(UInt32(pageLimit))) + 1
             self.getImageFromFlickrBySearchWithPage(methodArguments, pageNumber: randomPage)
-            
-            
-//            if photoCount > 0 {
-//                let arrayIndex = self.randomValue(photoCount)
-//                print("\narrayIndex: ", arrayIndex)
-//                
-//                guard let photos = photosDictionary["photo"] else {
-//                    print("There are no photos")
-//                    return
-//                }
-//                print("RandomPhoto: ", photos[arrayIndex])
-//                
-//                guard let imageUrlString = photos[arrayIndex]["url_m"] as? String,
-//                    let photoTitle = photos[arrayIndex]["title"] as? String else {
-//                        print("There is no url for the image")
-//                        return
-//                }
-//                print("URL: ", imageUrlString)
-//                
-//                let imageURL = NSURL(string: imageUrlString)
-//                
-//                /* 6 - Update the UI on the main thread */
-//                if let imageData = NSData(contentsOfURL: imageURL!) {
-//                    dispatch_async(dispatch_get_main_queue(), {
-//                        self.imageTitle.text = photoTitle
-//                        self.photoImageView.image = UIImage(data: imageData)
-//                    })
-//                }
-//            } else {
-//                dispatch_async(dispatch_get_main_queue(), {
-//                    print("No Photos Found. Search Again.")
-//                    self.imageTitle.text = "No Photos Found. Search Again."
-//                })
-//            }
         }
         task.resume()
     }
@@ -254,7 +254,7 @@ class ViewController: UIViewController {
             }
             
             /* GUARD: Is the "photos" key in our result? */
-            guard let photosDictionary = parsedResult["photos"] as? NSDictionary else {
+            guard let photosDictionary = parsedResult["photos"] as? [String: AnyObject] else {
                 print("Cannot find key 'photos' in \(parsedResult)")
                 return
             }
@@ -265,12 +265,10 @@ class ViewController: UIViewController {
                 return
             }
             
-            print("photosDictionary: ", photosDictionary)
-            
             if totalPhotosVal > 0 {
                 
                 /* GUARD: Is the "photo" key in photosDictionary? */
-                guard let photosArray = photosDictionary["photo"] as? [[String: AnyObject]] else {
+                guard let photosArray = photosDictionary["photo"] as? [[String: AnyObject]] where photosArray.count > 0 else {
                     print("Cannot find key 'photo' in \(photosDictionary)")
                     return
                 }
@@ -286,8 +284,6 @@ class ViewController: UIViewController {
                 }
                 
                 let imageURL = NSURL(string: imageUrlString)
-                print("imageURL: ", imageURL)
-                
                 if let imageData = NSData(contentsOfURL: imageURL!) {
                     dispatch_async(dispatch_get_main_queue(), {
                         
@@ -315,20 +311,6 @@ class ViewController: UIViewController {
         }
         
         task.resume()
-    }
-    
-    func createBoundingBoxString() -> String {
-        
-        let latitude = (self.latitude.text! as NSString).doubleValue
-        let longitude = (self.longitude.text! as NSString).doubleValue
-        
-        /* Fix added to ensure box is bounded by minimum and maximums */
-        let bottom_left_lon = max(longitude - BOUNDING_BOX_HALF_WIDTH, LON_MIN)
-        let bottom_left_lat = max(latitude - BOUNDING_BOX_HALF_HEIGHT, LAT_MIN)
-        let top_right_lon = min(longitude + BOUNDING_BOX_HALF_HEIGHT, LON_MAX)
-        let top_right_lat = min(latitude + BOUNDING_BOX_HALF_HEIGHT, LAT_MAX)
-        
-        return "\(bottom_left_lon),\(bottom_left_lat),\(top_right_lon),\(top_right_lat)"
     }
     
     /* Helper function: Given a dictionary of parameters, convert to a string for a url */
@@ -393,7 +375,6 @@ class ViewController: UIViewController {
         return keyboardSize.CGRectValue().height
     }
 }
-
 
 extension ViewController {
     func dismissAnyVisibleKeyboards() {
